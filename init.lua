@@ -1,89 +1,3 @@
---[[
-
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
-========       /:::========|  |==hjkl==:::\  \ required \    ========
-========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
-========                                                     ========
-=====================================================================
-=====================================================================
-
-What is Kickstart?
-
-  Kickstart.nvim is *not* a distribution.
-
-  Kickstart.nvim is a starting point for your own configuration.
-    The goal is that you can read every line of code, top-to-bottom, understand
-    what your configuration is doing, and modify it to suit your needs.
-
-    Once you've done that, you can start exploring, configuring and tinkering to
-    make Neovim your own! That might mean leaving Kickstart just the way it is for a while
-    or immediately breaking it into modular pieces. It's up to you!
-
-    If you don't know anything about Lua, I recommend taking some time to read through
-    a guide. One possible example which will only take 10-15 minutes:
-      - https://learnxinyminutes.com/docs/lua/
-
-    After understanding a bit more about Lua, you can use `:help lua-guide` as a
-    reference for how Neovim integrates Lua.
-    - :help lua-guide
-    - (or HTML version): https://neovim.io/doc/user/lua-guide.html
-
-Kickstart Guide:
-
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
-    If you don't know what this means, type the following:
-      - <escape key>
-      - :
-      - Tutor
-      - <enter key>
-
-    (If you already know the Neovim basics, you can skip this step.)
-
-  Once you've completed that, you can continue working through **AND READING** the rest
-  of the kickstart init.lua.
-
-  Next, run AND READ `:help`.
-    This will open up a help window with some basic information
-    about reading, navigating and searching the builtin help documentation.
-
-    This should be the first place you go to look when you're stuck or confused
-    with something. It's one of my favorite Neovim features.
-
-    MOST IMPORTANTLY, we provide a keymap "<space>sh" to [s]earch the [h]elp documentation,
-    which is very useful when you're not exactly sure of what you're looking for.
-
-  I have left several `:help X` comments throughout the init.lua
-    These are hints about where to find more information about the relevant settings,
-    plugins or Neovim features used in Kickstart.
-
-   NOTE: Look for lines like this
-
-    Throughout the file. These are for you, the reader, to help you understand what is happening.
-    Feel free to delete them once you know what you're doing, but they should serve as a guide
-    for when you are first encountering a few different constructs in your Neovim config.
-
-If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now! :)
---]]
-
 -- ============================================================
 -- SECTION 1: OPTIONS
 -- Core Neovim settings, leaders, options, basic keymaps, basic autocmds
@@ -99,7 +13,7 @@ do
   vim.g.maplocalleader = ' '
 
   -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -171,6 +85,8 @@ do
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
   vim.o.confirm = true
+  -- reload buffer when file changes externally
+  vim.o.autoread = true
 end
 
 -- ============================================================
@@ -219,12 +135,6 @@ do
   -- or just use <C-\><C-n> to exit terminal mode
   vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
-  -- TIP: Disable arrow keys in normal mode
-  -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
-  -- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
-  -- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
-  -- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
-
   -- Keybinds to make split navigation easier.
   --  Use CTRL+<hjkl> to switch between windows
   --
@@ -234,15 +144,6 @@ do
   vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
   vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
-  -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
-  -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
-  -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
-  -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
-  -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
-
-  -- [[ Basic Autocommands ]]
-  --  See `:help lua-guide-autocommands`
-
   -- Highlight when yanking (copying) text
   --  Try it with `yap` in normal mode
   --  See `:help vim.hl.on_yank()`
@@ -250,6 +151,11 @@ do
     desc = 'Highlight when yanking (copying) text',
     group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
     callback = function() vim.hl.on_yank() end,
+  })
+
+  vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'CursorHoldI' }, {
+    desc = 'Reload buffer if changed externally',
+    command = 'checktime',
   })
 end
 
@@ -346,8 +252,6 @@ do
   vim.pack.add { gh 'NMAC427/guess-indent.nvim' }
   require('guess-indent').setup {}
 
-  -- Here is a more advanced configuration example that passes options to `gitsigns.nvim`
-  --
   -- See `:help gitsigns` to understand what each configuration key does.
   -- Adds git related signs to the gutter, as well as utilities for managing changes
   vim.pack.add { gh 'lewis6991/gitsigns.nvim' }
@@ -372,6 +276,7 @@ do
       { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
       { '<leader>t', group = '[T]oggle' },
       { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } }, -- Enable gitsigns recommended keymaps first
+      { '<leader>c', group = '[C]laude Code', mode = { 'n', 'v' } },
       { 'gr', group = 'LSP Actions', mode = { 'n' } },
     },
   }
@@ -436,8 +341,81 @@ do
   --  You could remove this setup call if you don't like it,
   --  and try some other statusline plugin
   local statusline = require 'mini.statusline'
-  -- Set `use_icons` to true if you have a Nerd Font
-  statusline.setup { use_icons = vim.g.have_nerd_font }
+
+  --[[
+  -- statusline possible fields, to be defined for statusline.active and statusline.inactive (from :help 'statusline'):
+    item  meaning ~
+    f S   Path to the file in the buffer, as typed or relative to current
+          directory.
+    F S   Full path to the file in the buffer.
+    t S   File name (tail) of file in the buffer.
+    m F   Modified flag, text is "[+]"; "[-]" if 'modifiable' is off.
+    M F   Modified flag, text is ",+" or ",-".
+    r F   Readonly flag, text is "[RO]".
+    R F   Readonly flag, text is ",RO".
+    h F   Help buffer flag, text is "[help]".
+    H F   Help buffer flag, text is ",HLP".
+    w F   Preview window flag, text is "[Preview]".
+    W F   Preview window flag, text is ",PRV".
+    y F   Type of file in the buffer, e.g., "[vim]".  See 'filetype'.
+    Y F   Type of file in the buffer, e.g., ",VIM".  See 'filetype'.
+    q S   "[Quickfix List]", "[Location List]" or empty.
+    k S   Value of "b:keymap_name" or 'keymap' when |:lmap| mappings are
+          being used: "<keymap>"
+    n N   Buffer number.
+    b N   Value of character under cursor.
+    B N   As above, in hexadecimal.
+    o N   Byte number in file of byte under cursor, first byte is 1.
+          Mnemonic: Offset from start of file (with one added)
+    O N   As above, in hexadecimal.
+    l N   Line number.
+    L N   Number of lines in buffer.
+    c N   Column number (byte index).
+    v N   Virtual column number (screen column).
+    V N   Virtual column number as -{num}.  Not displayed if equal to 'c'.
+    p N   Percentage through file in lines as in |CTRL-G|.
+    P S   Percentage through file of displayed window.  This is like the
+          percentage described for 'ruler'.  Always 3 in length, unless
+          translated.
+    S S   'showcmd' content, see 'showcmdloc'.
+    a S   Argument list status as in default title.  ({current} of {max})
+          Empty if the argument file count is zero or one.
+    { NF  Evaluate expression between "%{" and "}" and substitute result.
+          Note that there is no "%" before the closing "}".  The
+          expression cannot contain a "}" character, call a function to
+          work around that.  See |stl-%{| below.
+    `{%` -  This is almost same as "{" except the result of the expression is
+          re-evaluated as a statusline format string.  Thus if the
+          return value of expr contains "%" items they will get expanded.
+          The expression can contain the "}" character, the end of
+          expression is denoted by "%}".
+          For example: >vim
+          ]]--
+
+  statusline.setup {
+    -- Set `use_icons` to true if you have a Nerd Font
+    use_icons = vim.g.have_nerd_font,
+    content = {
+      active = function()
+
+        local lsp_statusline = "🈯️: "
+        local clients = vim.lsp.get_clients({ bufnr = 0 })
+        if #clients == 0 then
+          lsp_statusline = lsp_statusline .. "🅧"
+        else
+          for _, client in ipairs(clients) do
+            lsp_statusline = lsp_statusline .. client.name .. ", "
+          end
+          lsp_statusline = lsp_statusline:sub(1, -3) -- Remove trailing comma and space
+        end
+
+
+        -- Show filename, modified/readonly flags, then right-aligned: LSP clients, filetype, line:col
+        return " %f %m%" .. "r%=" .. lsp_statusline .. " %y  %l:%c "
+      end,
+      inactive = nil,
+    }
+  }
 
   -- You can configure sections in the statusline by overriding their
   -- default behavior. For example, here we set the section for
@@ -499,7 +477,18 @@ do
     --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
     --   },
     -- },
-    -- pickers = {}
+    pickers = {
+      find_files = {
+        find_command = {
+          "rg",
+          "--files",
+          "--hidden",
+          "--glob=!.git/*", -- exclude .git from file search
+          "--glob=!node_modules/*", -- exclude node_modules from file search
+          "."
+        }
+      }
+    },
     extensions = {
       ['ui-select'] = { require('telescope.themes').get_dropdown() },
     },
@@ -694,14 +683,15 @@ do
   local servers = {
     -- clangd = {},
     -- gopls = {},
-    -- pyright = {},
+    bashls = {},
+    pyright = {},
     -- rust_analyzer = {},
     --
     -- Some languages (like typescript) have entire language plugins that can be useful:
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {},
 
     stylua = {}, -- Used to format Lua code
 
@@ -852,7 +842,7 @@ do
       -- <c-k>: Toggle signature help
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
-      preset = 'default',
+      preset = 'enter',
 
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -891,68 +881,6 @@ do
 end
 
 -- ============================================================
--- SECTION 9: TREESITTER
--- Parser installation, syntax highlighting, folds, indentation
--- ============================================================
-do
-  -- [[ Configure Treesitter ]]
-  --  Used to highlight, edit, and navigate code
-  --
-  --  See `:help nvim-treesitter-intro`
-
-  -- NOTE: You can also specify a branch or a specific commit
-  vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
-
-  -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
-  require('nvim-treesitter').install(parsers)
-
-  ---@param buf integer
-  ---@param language string
-  local function treesitter_try_attach(buf, language)
-    -- Check if a parser exists and load it
-    if not vim.treesitter.language.add(language) then return end
-    -- Enable syntax highlighting and other treesitter features
-    vim.treesitter.start(buf, language)
-
-    -- Enable treesitter based folds
-    -- For more info on folds see `:help folds`
-    -- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    -- vim.wo.foldmethod = 'expr'
-
-    -- Check if treesitter indentation is available for this language, and if so enable it
-    -- in case there is no indent query, the indentexpr will fallback to the vim's built in one
-    local has_indent_query = vim.treesitter.query.get(language, 'indents') ~= nil
-
-    -- Enable treesitter based indentation
-    if has_indent_query then vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()" end
-  end
-
-  local available_parsers = require('nvim-treesitter').get_available()
-  vim.api.nvim_create_autocmd('FileType', {
-    callback = function(args)
-      local buf, filetype = args.buf, args.match
-
-      local language = vim.treesitter.language.get_lang(filetype)
-      if not language then return end
-
-      local installed_parsers = require('nvim-treesitter').get_installed 'parsers'
-
-      if vim.tbl_contains(installed_parsers, language) then
-        -- Enable the parser if it is already installed
-        treesitter_try_attach(buf, language)
-      elseif vim.tbl_contains(available_parsers, language) then
-        -- If a parser is available in `nvim-treesitter`, auto-install it and enable it after the installation is done
-        require('nvim-treesitter').install(language):await(function() treesitter_try_attach(buf, language) end)
-      else
-        -- Try to enable treesitter features in case the parser exists but is not available from `nvim-treesitter`
-        treesitter_try_attach(buf, language)
-      end
-    end,
-  })
-end
-
--- ============================================================
 -- SECTION 10: OPTIONAL EXAMPLES / NEXT STEPS
 -- kickstart.plugins.* examples
 -- ============================================================
@@ -966,18 +894,54 @@ do
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug'
+  require 'kickstart.plugins.debug'
   -- require 'kickstart.plugins.indent_line'
   -- require 'kickstart.plugins.lint'
-  -- require 'kickstart.plugins.autopairs'
-  -- require 'kickstart.plugins.neo-tree'
+  require 'kickstart.plugins.autopairs'
+  require 'kickstart.plugins.neo-tree'
   -- require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
 
-  -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
-  --
-  --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- require 'custom.plugins'
+  require 'custom.plugins'
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+-- ============================================================
+-- SECTION 11: Custom configuration
+-- ============================================================
+
+-- SECTION 11.1: Autocommands
+vim.api.nvim_create_user_command('PackClean', function()
+  local unused_plugins = {}
+
+  -- Identify inactive plugins
+  for _, plugin in ipairs(vim.pack.get()) do
+    if not plugin.active then table.insert(unused_plugins, plugin.spec.name) end
+  end
+
+  if #unused_plugins == 0 then
+    print 'vim.pack: No unused plugins found.'
+    return
+  end
+
+  -- Confirm deletion
+  local msg = string.format('Remove %d unused plugin(s): %s?', #unused_plugins, table.concat(unused_plugins, ', '))
+  local choice = vim.fn.confirm(msg, '&Yes\n&No', 2)
+
+  if choice == 1 then
+    vim.pack.del(unused_plugins)
+    print('vim.pack: Removed ' .. #unused_plugins .. ' plugin(s).')
+  end
+end, {
+  desc = 'Remove all inactive vim.pack plugins',
+  nargs = 0,
+})
+
+vim.api.nvim_create_user_command('ConfigReload', function()
+  vim.cmd 'source $MYVIMRC'
+  print('Reloaded ' .. vim.fn.stdpath 'config' .. '/init.lua')
+end, {
+  desc = 'Reload the Neovim configuration',
+  nargs = 0,
+})
